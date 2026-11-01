@@ -1,0 +1,36 @@
+name: Discord notify
+description: Envía un embed a Discord con el estado del despliegue
+inputs:
+  webhook:
+    description: URL del webhook
+    required: true
+  title:
+    description: Título (qué se despliega)
+    required: true
+  status:
+    description: started | success | failure | cancelled
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        WEBHOOK: ${{ inputs.webhook }}
+        TITLE: ${{ inputs.title }}
+        STATUS: ${{ inputs.status }}
+        REPO: ${{ github.repository }}
+        BRANCH: ${{ github.ref_name }}
+        ACTOR: ${{ github.actor }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        [ -z "$WEBHOOK" ] && exit 0
+        case "$STATUS" in
+          started) COLOR=3447003; ICON="??" ;;
+          success) COLOR=3066993; ICON="?" ;;
+          cancelled) COLOR=10070709; ICON="?" ;;
+          *) COLOR=15158332; ICON="?" ;;
+        esac
+        jq -n --arg t "$ICON $TITLE: $STATUS" --arg d "**Repo:** $REPO\n**Rama:** $BRANCH\n**Por:** $ACTOR" \
+          --arg u "$RUN_URL" --argjson c "$COLOR" \
+          '{embeds:[{title:$t,description:($d|gsub("\\\\n";"\n")),url:$u,color:$c}]}' \
+          | curl -sS -H "Content-Type: application/json" -d @- "$WEBHOOK" || true

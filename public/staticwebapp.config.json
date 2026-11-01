@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "globalHeaders": { "Access-Control-Allow-Origin": "*" },
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/*.json", "/*.js", "/*.css"] }
+}

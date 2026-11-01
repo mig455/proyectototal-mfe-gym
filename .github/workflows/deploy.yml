@@ -1,0 +1,27 @@
+name: Deploy MFE gym
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/discord-notify
+        with: { webhook: "${{ secrets.DISCORD_WEBHOOK }}", title: MFE gym, status: started }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npx ng build
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_TOKEN_MFE_GYM }}
+          action: upload
+          app_location: dist/proyectototal-mfe-gym/browser
+          skip_app_build: true
+          skip_api_build: true
+      - if: always()
+        uses: ./.github/actions/discord-notify
+        with: { webhook: "${{ secrets.DISCORD_WEBHOOK }}", title: MFE gym, status: "${{ job.status }}" }
